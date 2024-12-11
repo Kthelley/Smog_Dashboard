@@ -1,0 +1,88 @@
+/* General body styling */
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background-image: url('Geology-and-Formation-of-Taal-Volcano-and-Lake-Taal2 - Copy.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+#dateTime {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 20px;
+  font-weight: sans-serif;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Add shadow effect */
+}
+
+/* Table styling */
+table {
+  margin: 20px auto;
+  border-collapse: collapse;
+  width: 80%;
+  position: center;
+  height: 20%;
+}
+th, td {
+  padding: 10px;
+  text-align: center;
+}
+.good {
+  background-color: green;
+  color: white;
+}
+
+.moderate {
+  background-color: yellow;
+  color: black;
+}
+
+.unhealthy {
+  background-color: red;
+  color: white;
+}
+
+.very-unhealthy {
+  background-color: purple;
+  color: white;
+}
+
+/* Chart container grid layout */
+#chartsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+.chart-container {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 250px;
+}
+#chartContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+canvas {
+  width: 100% !important;
+  height: 400px;
+}
+
+
+
+/* Custom color for specific charts */
+.nitrogen-dioxide-chart {
+  background-color: rgba(255, 0, 0, 0.8); /* Red background */
+  color: white;
+}
