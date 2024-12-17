@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smog Quality Indicator</title>
+  <link rel="stylesheet" href="Style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Add custom styles for status backgrounds */
+    .status-good {
+      background-color: green;
+      color: #155724;
+      font-weight: bold;
+    }
+
+    .status-unhealthy {
+      background-color: yellow;
+      color: #856404;
+      font-weight: bold;
+    }
+
+    .status-hazardous {
+      background-color: red;
+      color: #721c24;
+      font-weight: bold;
+    }
+
+    /* Table styles */
+    #chemicalTable {
+      width: 90%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    #chemicalTable th, #chemicalTable td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    #chemicalTable th {
+      background-color: #f4f4f4;
+      font-weight: bold;
+    }
+
+    #dateTime {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      font-family: Arial, sans-serif;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      width: 80%;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- Display Date and Time -->
+  <div id="dateTime"></div>
+
+  <h1>Smog Quality Indicator</h1>
+  
+  <!-- Table for displaying the latest smog parameter values -->
+  <table id="chemicalTable">
+    <tr>
+      <th>Chemical</th>
+      <th>Value</th>
+      <th>Status</th>
+    </tr>
+    <!-- Dynamic rows for each chemical parameter will be populated here -->
+  </table>
+
+  <!-- Chart for displaying chemical levels -->
+  <div id="chartsContainer">
+    <div class="chart-container">
+      <canvas id="myChart"></canvas>
+    </div>
+  </div>
+
+  <!-- JavaScript for updating the chart and table -->
+  <script>
+    // Function to display the current date and time
+    const updateDateTime = () => {
+      const now = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric', 
+        hour: 'numeric', 
+        minute: 'numeric', 
+        second: 'numeric' 
+      };
+      document.getElementById('dateTime').textContent = now.toLocaleDateString('en-US', options);
+    };
+
+    // Update date and time every second
+    setInterval(updateDateTime, 1000);
+
+    // Function to determine the CSS class based on the status
+    const getStatusClass = (value, type) => {
+      const thresholds = {
+        NO2: { good: 40, unhealthy: 200, hazardous: 1000 },
+        VOCs: { good: 500, unhealthy: 2000, hazardous: 5000 },
+        NH3: { good: 100, unhealthy: 400, hazardous: 1000 },
+        CO2: { good: 1000, unhealthy: 5000, hazardous: 10000 },
+        CO: { good: 9, unhealthy: 35, hazardous: 100 }
+      };
+
+      if (value <= thresholds[type].good) return 'status-good';
+      if (value <= thresholds[type].unhealthy) return 'status-unhealthy';
+      return 'status-hazardous';
+    };
+
+    // Function to get the status text
+    const getStatusText = (value, type) => {
+      const thresholds = {
+        NO2: { good: 40, unhealthy: 200, hazardous: 1000 },
+        VOCs: { good: 500, unhealthy: 2000, hazardous: 5000 },
+        NH3: { good: 100, unhealthy: 400, hazardous: 1000 },
+        CO2: { good: 1000, unhealthy: 5000, hazardous: 10000 },
+        CO: { good: 9, unhealthy: 35, hazardous: 100 }
+      };
+
+      if (value <= thresholds[type].good) return 'Good';
+      if (value <= thresholds[type].unhealthy) return 'Unhealthy';
+      return 'Hazardous';
+    };
+
+    // Function to update the chemical parameters table with latest data
+    const updateChemicalTable = (no2, vocs, nh3, co2, co) => {
+      const table = document.getElementById('chemicalTable');
+      // Clear the table (except for the header row)
+      table.innerHTML = `
+        <tr>
+          <th>Chemical</th>
+          <th>Value</th>
+          <th>Status</th>
+        </tr>`;
+
+      // Array of chemical data
+      const chemicals = [
+        { name: 'NO₂', value: no2, type: 'NO2' },
+        { name: 'VOCs', value: vocs, type: 'VOCs' },
+        { name: 'NH₃', value: nh3, type: 'NH3' },
+        { name: 'CO₂', value: co2, type: 'CO2' },
+        { name: 'CO', value: co, type: 'CO' }
+      ];
+
+      // Add rows dynamically to the table
+      chemicals.forEach(chemical => {
+        const statusText = getStatusText(chemical.value, chemical.type);
+        const statusClass = getStatusClass(chemical.value, chemical.type);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${chemical.name}</td>
+          <td>${chemical.value}</td>
+          <td class="${statusClass}">${statusText}</td>
+        `;
+        table.appendChild(row);
+      });
+    };
+
+    // Function to update the chart with the latest data
+    const updateChartData = (no2, vocs, nh3, co2, co) => {
+      chart.data.datasets[0].data.push(no2);
+      chart.data.datasets[1].data.push(vocs);
+      chart.data.datasets[2].data.push(nh3);
+      chart.data.datasets[3].data.push(co2);
+      chart.data.datasets[4].data.push(co);
+
+      // Ensure the chart does not grow indefinitely
+      if (chart.data.datasets[0].data.length > 20) {
+        chart.data.labels.shift();
+        chart.data.datasets.forEach(dataset => dataset.data.shift());
+      }
+
+      chart.data.labels.push(new Date().toLocaleTimeString()); // Add current time to labels
+      chart.update();
+    };
+
+    const updateChart = () => {
+      fetch(`https://api.thingspeak.com/channels/2780006/feeds.json?api_key=FZU7D6A7884LXLPN&results=1`)
+        .then(response => response.json())
+        .then(data => {
+          const parseValue = (value) => isNaN(value) || value === null ? 0 : parseFloat(value);
+
+          const no2Level = parseValue(data.feeds[0]?.field1);
+          const vocsLevel = parseValue(data.feeds[0]?.field2);
+          const nh3Level = parseValue(data.feeds[0]?.field3);
+          const co2Level = parseValue(data.feeds[0]?.field4);
+          const coLevel = parseValue(data.feeds[0]?.field5);
+
+          updateChemicalTable(no2Level, vocsLevel, nh3Level, co2Level, coLevel);
+          updateChartData(no2Level, vocsLevel, nh3Level, co2Level, coLevel);
+        })
+        .catch(error => console.error("Error fetching data: ", error));
+    };
+
+    // Initialize the chart
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'NO₂', data: [], borderColor: 'rgba(255, 0, 0, 0.7)', fill: false },
+          { label: 'VOCs', data: [], borderColor: 'rgba(0, 128, 255, 0.7)', fill: false },
+          { label: 'NH₃', data: [], borderColor: 'rgba(0, 255, 0, 0.7)', fill: false },
+          { label: 'CO₂', data: [], borderColor: 'rgba(255, 165, 0, 0.7)', fill: false },
+          { label: 'CO', data: [], borderColor: 'rgba(0, 0, 0, 0.7)', fill: false }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            labels: {
+              font: {
+                size: 12
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Value (μg/m³ or ppm)'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Time'
+            }
+          }
+        }
+      }
+    });
+
+    // Update chart and table data every 10 seconds
+    setInterval(updateChart, 10000);
+  </script>
+</body>
+</html>
